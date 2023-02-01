@@ -5,11 +5,11 @@
  * @format
  */
 
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Button, SafeAreaView, StyleSheet, Text, View} from 'react-native';
 
 function App(): JSX.Element {
-  const [startDate, setStartDate] = useState<Date>();
+  const [startDate, setStartDate] = useState<Date | undefined>();
 
   const formattedStartTime = () => {
     if (startDate == null) {
@@ -19,6 +19,8 @@ function App(): JSX.Element {
     var options: Intl.DateTimeFormatOptions = {
       hour: '2-digit',
       minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
     };
 
     const formatted = startDate.toLocaleString('en-GB', options);
@@ -28,7 +30,13 @@ function App(): JSX.Element {
   return (
     <SafeAreaView style={styles.container}>
       <View>
-        <Button onPress={() => setStartDate(Date())} title="Start Timer" />
+        <Button
+          onPress={() => {
+            const newDate = new Date();
+            setStartDate(newDate);
+          }}
+          title="Start Timer"
+        />
         <Text style={styles.text}>Started at: {formattedStartTime()}</Text>
       </View>
     </SafeAreaView>
