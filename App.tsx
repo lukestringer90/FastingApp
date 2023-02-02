@@ -6,38 +6,63 @@
  */
 
 import React, {useEffect, useState} from 'react';
-import {Button, SafeAreaView, StyleSheet, Text, View} from 'react-native';
+import {
+  Alert,
+  Button,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import moment from 'moment';
 
 function App(): JSX.Element {
-  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [startDate, setStartDate] = useState<moment.Moment | null>();
+  const [_, setTime] = useState(new Date());
 
-  const formattedStartTime = () => {
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const timeSinceStartedFasting = () => {
     if (startDate == null) {
       return 'None';
     }
 
-    var options: Intl.DateTimeFormatOptions = {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    };
+    const now = moment();
+    const diff = now.diff(startDate, 'seconds');
 
-    const formatted = startDate.toLocaleString('en-GB', options);
-    return formatted;
+    return `${diff} seconds`;
   };
+
+  const startTapped = () => {
+    if (startDate == null) {
+      const start = moment();
+      setStartDate(start);
+    } else {
+      Alert.alert(
+        '',
+        `You fasted for a total of ${timeSinceStartedFasting()}`,
+        [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+      );
+      setStartDate(null);
+    }
+  };
+
+  const buttonText =
+    startDate == null ? '🟢 Start Fasting 🟢' : '🔴 Stop Fasting 🔴';
 
   return (
     <SafeAreaView style={styles.container}>
       <View>
-        <Button
-          onPress={() => {
-            const newDate = new Date();
-            setStartDate(newDate);
-          }}
-          title="Start Timer"
-        />
-        <Text style={styles.text}>Started at: {formattedStartTime()}</Text>
+        <Button onPress={startTapped} title={buttonText} />
+        <Text style={styles.text}>
+          Fasting for: {timeSinceStartedFasting()}
+        </Text>
       </View>
     </SafeAreaView>
   );
