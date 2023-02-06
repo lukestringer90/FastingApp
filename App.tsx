@@ -6,14 +6,7 @@
  */
 
 import React, {useEffect, useState} from 'react';
-import {
-  Alert,
-  Button,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import {Button, SafeAreaView, StyleSheet, Text, View} from 'react-native';
 import moment from 'moment';
 import {useAsyncStorage} from '@react-native-async-storage/async-storage';
 
@@ -21,17 +14,18 @@ type Nullable<T> = T | null;
 
 function App(): JSX.Element {
   const [startDate, setStartDate] = useState<Nullable<moment.Moment>>();
+  const [endDate, setEndDate] = useState<Nullable<moment.Moment>>();
   const [_, setTime] = useState(new Date());
 
   const {getItem, setItem, removeItem} = useAsyncStorage('@startDate');
 
-  const readItemFromStorage = async () => {
+  const readStartDate = async () => {
     const jsonValue = await getItem();
     const date = jsonValue != null ? JSON.parse(jsonValue) : null;
     setStartDate(date);
   };
 
-  const writeItemToStorage = async (date: Nullable<moment.Moment>) => {
+  const writeStartDate = async (date: Nullable<moment.Moment>) => {
     if (date == null) {
       removeItem();
       setStartDate(null);
@@ -43,7 +37,7 @@ function App(): JSX.Element {
   };
 
   useEffect(() => {
-    readItemFromStorage();
+    // readStartDate();
   });
 
   useEffect(() => {
@@ -54,43 +48,66 @@ function App(): JSX.Element {
     return () => clearInterval(interval);
   }, []);
 
-  const timeSinceStartedFasting = () => {
-    if (startDate == null) {
-      return 'None';
+  const timeText = () => {
+    // No time started, ever
+    if (startDate == null && endDate == null) {
+      return null;
     }
 
-    const now = moment();
-    const seconds = now.diff(startDate, 'seconds');
-    const minutes = now.diff(startDate, 'minutes');
-    const hours = now.diff(startDate, 'hours');
+    const endDateToUse = endDate ?? moment();
+    const duration = endDateToUse.from(startDate, true);
 
-    return `${hours}hr ${minutes}min ${seconds}sec`;
+    // Currently fasting
+    if (startDate != null && endDate == null) {
+      return `Fasted for ${duration} ⏳`;
+    }
+    // Finished fasting
+    else if (startDate != null && endDate != null) {
+      return `Fast of ${duration} finished 🥣`;
+    }
   };
 
-  const startTapped = () => {
-    if (startDate == null) {
+  const buttonTapped = () => {
+    // First launch
+    if (startDate == null && endDate == null) {
       const start = moment();
-      writeItemToStorage(start);
-    } else {
-      Alert.alert(
-        '',
-        `You fasted for a total of ${timeSinceStartedFasting()}`,
-        [{text: 'OK', onPress: () => console.log('OK Pressed')}],
-      );
-      writeItemToStorage(null);
+      writeStartDate(start);
+    }
+    // Currently fasting
+    else if (endDate == null) {
+      // So stop
+      const end = moment();
+      setEndDate(end);
+    }
+    // Stopped fasting
+    else if (startDate != null && endDate != null) {
+      // So start
+      const start = moment();
+      writeStartDate(start);
+      setEndDate(null);
     }
   };
 
-  const buttonText =
-    startDate == null ? '🟢 Start Fasting 🟢' : '🔴 Stop Fasting 🔴';
+  const buttonText = () => {
+    // First launch
+    if (startDate == null && endDate == null) {
+      return 'Start Fasting';
+    }
+    // Current fasting
+    else if (startDate != null && endDate == null) {
+      return 'Stop Fasting';
+    }
+
+    // startDate != null && endDate != null
+    // Finished
+    return 'Start Fasting';
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <View>
-        <Button onPress={startTapped} title={buttonText} />
-        <Text style={styles.text}>
-          Fasting for: {timeSinceStartedFasting()}
-        </Text>
+        <Text style={styles.text}>{timeText()}</Text>
+        <Button onPress={buttonTapped} title={buttonText()} />
       </View>
     </SafeAreaView>
   );
@@ -105,6 +122,7 @@ const styles = StyleSheet.create({
   text: {
     textAlign: 'center',
     marginVertical: 8,
+    fontSize: 24,
   },
 });
 
