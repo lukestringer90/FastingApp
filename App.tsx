@@ -37,7 +37,7 @@ function App(): JSX.Element {
   };
 
   useEffect(() => {
-    // readStartDate();
+    readStartDate();
   });
 
   useEffect(() => {
