@@ -15,10 +15,36 @@ import {
   View,
 } from 'react-native';
 import moment from 'moment';
+import {useAsyncStorage} from '@react-native-async-storage/async-storage';
+
+type Nullable<T> = T | null;
 
 function App(): JSX.Element {
-  const [startDate, setStartDate] = useState<moment.Moment | null>();
+  const [startDate, setStartDate] = useState<Nullable<moment.Moment>>();
   const [_, setTime] = useState(new Date());
+
+  const {getItem, setItem, removeItem} = useAsyncStorage('@startDate');
+
+  const readItemFromStorage = async () => {
+    const jsonValue = await getItem();
+    const date = jsonValue != null ? JSON.parse(jsonValue) : null;
+    setStartDate(date);
+  };
+
+  const writeItemToStorage = async (date: Nullable<moment.Moment>) => {
+    if (date == null) {
+      removeItem();
+      setStartDate(null);
+    } else {
+      const jsonValue = JSON.stringify(date);
+      await setItem(jsonValue);
+      setStartDate(date);
+    }
+  };
+
+  useEffect(() => {
+    readItemFromStorage();
+  });
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -34,22 +60,24 @@ function App(): JSX.Element {
     }
 
     const now = moment();
-    const diff = now.diff(startDate, 'seconds');
+    const seconds = now.diff(startDate, 'seconds');
+    const minutes = now.diff(startDate, 'minutes');
+    const hours = now.diff(startDate, 'hours');
 
-    return `${diff} seconds`;
+    return `${hours}hr ${minutes}min ${seconds}sec`;
   };
 
   const startTapped = () => {
     if (startDate == null) {
       const start = moment();
-      setStartDate(start);
+      writeItemToStorage(start);
     } else {
       Alert.alert(
         '',
         `You fasted for a total of ${timeSinceStartedFasting()}`,
         [{text: 'OK', onPress: () => console.log('OK Pressed')}],
       );
-      setStartDate(null);
+      writeItemToStorage(null);
     }
   };
 
