@@ -15,7 +15,6 @@ type Nullable<T> = T | null;
 function App(): JSX.Element {
   const [startDate, setStartDate] = useState<Nullable<moment.Moment>>();
   const [endDate, setEndDate] = useState<Nullable<moment.Moment>>();
-  const [_, setTime] = useState(new Date());
 
   const {getItem, setItem, removeItem} = useAsyncStorage('@startDate');
 
@@ -40,13 +39,11 @@ function App(): JSX.Element {
     readStartDate();
   });
 
+  const secondsUntilReload = 1 * 1000; // every minute
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
-
+    const interval = setInterval(() => {}, secondsUntilReload);
     return () => clearInterval(interval);
-  }, []);
+  }, []); // need empty array for the component to reload
 
   const timeText = () => {
     // No time started, ever
