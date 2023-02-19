@@ -10,8 +10,6 @@ import {Button, SafeAreaView, StyleSheet, Text, View} from 'react-native';
 import moment from 'moment';
 import {useAsyncStorage} from '@react-native-async-storage/async-storage';
 
-type Nullable<T> = T | null;
-
 function App(): JSX.Element {
   const [startDate, setStartDate] = useState<Nullable<moment.Moment>>();
   const [endDate, setEndDate] = useState<Nullable<moment.Moment>>();
