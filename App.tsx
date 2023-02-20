@@ -8,11 +8,10 @@
 import React, {useEffect, useState} from 'react';
 import {Button, SafeAreaView, StyleSheet, Text, View} from 'react-native';
 import {useAsyncStorage} from '@react-native-async-storage/async-storage';
-import {Fast, FastState} from './fast';
-import moment from 'moment';
+import {Fast} from './fast';
 
 function App(): JSX.Element {
-  const [fast, setFast] = useState<Fast>(new Fast(null, null));
+  const [fast, setFast] = useState<Fast>(new Fast());
   const [_, setTime] = useState(new Date());
 
   const secondsUntilReload = 1 * 1000; // every minute
@@ -25,27 +24,7 @@ function App(): JSX.Element {
   }, []);
 
   const buttonTapped = () => {
-    switch (fast.state()) {
-      case FastState.NotStarted: {
-        let newFast = fast.clone();
-        newFast.start = moment();
-        setFast(newFast);
-        break;
-      }
-      case FastState.Started: {
-        let newFast = fast.clone();
-        newFast.end = moment();
-        setFast(newFast);
-        break;
-      }
-      case FastState.Finished: {
-        let newFast = fast.clone();
-        newFast.start = moment();
-        newFast.end = null;
-        setFast(newFast);
-        break;
-      }
-    }
+    setFast(fast.next());
   };
 
   return (
