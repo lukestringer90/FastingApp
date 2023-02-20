@@ -7,102 +7,61 @@
 
 import React, {useEffect, useState} from 'react';
 import {Button, SafeAreaView, StyleSheet, Text, View} from 'react-native';
-import moment from 'moment';
 import {useAsyncStorage} from '@react-native-async-storage/async-storage';
+import {Fast} from './fast';
+import moment from 'moment';
 
 function App(): JSX.Element {
-  const [startDate, setStartDate] = useState<Nullable<moment.Moment>>();
-  const [endDate, setEndDate] = useState<Nullable<moment.Moment>>();
-
-  const {getItem, setItem, removeItem} = useAsyncStorage('@startDate');
-
-  const readStartDate = async () => {
-    const jsonValue = await getItem();
-    const date = jsonValue != null ? JSON.parse(jsonValue) : null;
-    setStartDate(date);
-  };
-
-  const writeStartDate = async (date: Nullable<moment.Moment>) => {
-    if (date == null) {
-      removeItem();
-      setStartDate(null);
-    } else {
-      const jsonValue = JSON.stringify(date);
-      await setItem(jsonValue);
-      setStartDate(date);
-    }
-  };
-
-  useEffect(() => {
-    readStartDate();
-  });
+  const [fast, setFast] = useState<Fast>(new Fast(null, null));
+  const [_, setTime] = useState(new Date());
 
   const secondsUntilReload = 1 * 1000; // every minute
   useEffect(() => {
-    const interval = setInterval(() => {}, secondsUntilReload);
+    const interval = setInterval(() => {
+      setTime(new Date());
+    }, secondsUntilReload);
+
     return () => clearInterval(interval);
-  }, []); // need empty array for the component to reload
-
-  const timeText = () => {
-    // No time started, ever
-    if (startDate == null && endDate == null) {
-      return null;
-    }
-
-    const endDateToUse = endDate ?? moment();
-    const duration = endDateToUse.from(startDate, true);
-
-    // Currently fasting
-    if (startDate != null && endDate == null) {
-      return `Fasted for ${duration} ⏳`;
-    }
-    // Finished fasting
-    else if (startDate != null && endDate != null) {
-      return `Fast of ${duration} finished 🥣`;
-    }
-  };
+  }, []);
 
   const buttonTapped = () => {
     // First launch
-    if (startDate == null && endDate == null) {
+    if (fast.start == null && fast.end == null) {
+      console.log('First Launch');
       const start = moment();
-      writeStartDate(start);
+
+      let newFast = fast.clone();
+      newFast.start = start;
+      setFast(newFast);
     }
     // Currently fasting
-    else if (endDate == null) {
+    else if (fast.end == null) {
+      console.log('Currently Fasting');
       // So stop
       const end = moment();
-      setEndDate(end);
+      let newFast = fast.clone();
+      newFast.end = end;
+      setFast(newFast);
     }
     // Stopped fasting
-    else if (startDate != null && endDate != null) {
+    else if (fast.start != null && fast.end != null) {
+      console.log('Stopped Fasting');
       // So start
       const start = moment();
-      writeStartDate(start);
-      setEndDate(null);
-    }
-  };
 
-  const buttonText = () => {
-    // First launch
-    if (startDate == null && endDate == null) {
-      return 'Start Fasting';
-    }
-    // Current fasting
-    else if (startDate != null && endDate == null) {
-      return 'Stop Fasting';
-    }
+      let newFast = fast.clone();
+      newFast.start = start;
+      newFast.end = null;
 
-    // startDate != null && endDate != null
-    // Finished
-    return 'Start Fasting';
+      setFast(newFast);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View>
-        <Text style={styles.text}>{timeText()}</Text>
-        <Button onPress={buttonTapped} title={buttonText()} />
+        <Text style={styles.text}>{fast.timeText()}</Text>
+        <Button onPress={buttonTapped} title={fast.buttonText()} />
       </View>
     </SafeAreaView>
   );
