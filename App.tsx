@@ -8,7 +8,7 @@
 import React, {useEffect, useState} from 'react';
 import {Button, SafeAreaView, StyleSheet, Text, View} from 'react-native';
 import {useAsyncStorage} from '@react-native-async-storage/async-storage';
-import {Fast} from './fast';
+import {Fast, FastState} from './fast';
 import moment from 'moment';
 
 function App(): JSX.Element {
@@ -25,35 +25,26 @@ function App(): JSX.Element {
   }, []);
 
   const buttonTapped = () => {
-    // First launch
-    if (fast.start == null && fast.end == null) {
-      console.log('First Launch');
-      const start = moment();
-
-      let newFast = fast.clone();
-      newFast.start = start;
-      setFast(newFast);
-    }
-    // Currently fasting
-    else if (fast.end == null) {
-      console.log('Currently Fasting');
-      // So stop
-      const end = moment();
-      let newFast = fast.clone();
-      newFast.end = end;
-      setFast(newFast);
-    }
-    // Stopped fasting
-    else if (fast.start != null && fast.end != null) {
-      console.log('Stopped Fasting');
-      // So start
-      const start = moment();
-
-      let newFast = fast.clone();
-      newFast.start = start;
-      newFast.end = null;
-
-      setFast(newFast);
+    switch (fast.state()) {
+      case FastState.NotStarted: {
+        let newFast = fast.clone();
+        newFast.start = moment();
+        setFast(newFast);
+        break;
+      }
+      case FastState.Started: {
+        let newFast = fast.clone();
+        newFast.end = moment();
+        setFast(newFast);
+        break;
+      }
+      case FastState.Finished: {
+        let newFast = fast.clone();
+        newFast.start = moment();
+        newFast.end = null;
+        setFast(newFast);
+        break;
+      }
     }
   };
 

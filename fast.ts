@@ -1,5 +1,11 @@
 import moment from 'moment';
 
+export enum FastState {
+  NotStarted,
+  Started,
+  Finished,
+}
+
 export class Fast {
   start: Nullable<moment.Moment>;
   end: Nullable<moment.Moment>;
@@ -13,50 +19,33 @@ export class Fast {
     this.end = end;
   }
 
-  buttonText() {
-    const getText = () => {
-      // First launch
-      if (this.start == null && this.end == null) {
-        return 'Start Fasting';
-      }
-      // Current fasting
-      else if (this.start != null && this.end == null) {
-        return 'Stop Fasting';
-      }
+  state() {
+    if (this.start == null && this.end == null) {
+      return FastState.NotStarted;
+    } else if (this.start != null && this.end == null) {
+      return FastState.Started;
+    } else {
+      return FastState.Finished;
+    }
+  }
 
-      // startDate != null && endDate != null
-      // Finished
-      return 'Start Fasting';
-    };
-    const text = getText();
-    console.log(`Button Text: ${text}`);
-    return text;
+  buttonText() {
+    return this.state() === FastState.Started
+      ? 'Stop Fasting'
+      : 'Start Fasting';
   }
 
   timeText() {
-    const getText = () => {
-      // No time started, ever
-      if (this.start == null && this.end == null) {
-        return null;
-      }
+    if (this.state() === FastState.NotStarted) {
+      return null;
+    }
 
-      const endDateToUse = this.end ?? moment();
-      const duration = endDateToUse.from(this.start, true);
+    const endDateToUse = this.end ?? moment();
+    const duration = endDateToUse.from(this.start, true);
 
-      // Currently fasting
-      if (this.start != null && this.end == null) {
-        return `Fasted for ${duration} ⏳`;
-      }
-      // Finished fasting
-      else if (this.start != null && this.end != null) {
-        return `Fast of ${duration} finished 🥣`;
-      }
-
-      return '';
-    };
-
-    const text = getText();
-    console.log(`Time Text: ${text}`);
-    return text;
+    if (this.state() === FastState.Started) {
+      return `Fasted for ${duration} ⏳`;
+    }
+    return `Fast of ${duration} finished 🥣`;
   }
 }
