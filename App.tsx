@@ -7,107 +7,52 @@
 
 import React, {useEffect, useState} from 'react';
 import {Button, SafeAreaView, StyleSheet, Text, View} from 'react-native';
-import moment from 'moment';
 import {useAsyncStorage} from '@react-native-async-storage/async-storage';
-
-type Nullable<T> = T | null;
+import {Fast} from './fast';
 
 function App(): JSX.Element {
-  const [startDate, setStartDate] = useState<Nullable<moment.Moment>>();
-  const [endDate, setEndDate] = useState<Nullable<moment.Moment>>();
-  const [_, setTime] = useState(new Date());
+  const [fast, setFast] = useState<Fast>(new Fast());
 
-  const {getItem, setItem, removeItem} = useAsyncStorage('@startDate');
+  const {getItem, setItem, removeItem} = useAsyncStorage('@fast');
 
-  const readStartDate = async () => {
+  const readFast = async () => {
+    console.log('Reading Fast');
     const jsonValue = await getItem();
-    const date = jsonValue != null ? JSON.parse(jsonValue) : null;
-    setStartDate(date);
+    console.log(`Read: ${jsonValue}`);
+
+    const loadedFast = jsonValue != null ? JSON.parse(jsonValue) : new Fast();
+    setFast(loadedFast);
   };
 
-  const writeStartDate = async (date: Nullable<moment.Moment>) => {
-    if (date == null) {
-      removeItem();
-      setStartDate(null);
-    } else {
-      const jsonValue = JSON.stringify(date);
-      await setItem(jsonValue);
-      setStartDate(date);
-    }
+  const writeFast = async (fastToWrite: Fast) => {
+    const jsonValue = JSON.stringify(fast);
+    console.log(`To write:: ${jsonValue}`);
+    await setItem(jsonValue);
+    setFast(fastToWrite);
   };
 
   useEffect(() => {
-    readStartDate();
-  });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
-
-    return () => clearInterval(interval);
+    // On first load read the Fast from storage
+    readFast();
   }, []);
 
-  const timeText = () => {
-    // No time started, ever
-    if (startDate == null && endDate == null) {
-      return null;
-    }
-
-    const endDateToUse = endDate ?? moment();
-    const duration = endDateToUse.from(startDate, true);
-
-    // Currently fasting
-    if (startDate != null && endDate == null) {
-      return `Fasted for ${duration} ⏳`;
-    }
-    // Finished fasting
-    else if (startDate != null && endDate != null) {
-      return `Fast of ${duration} finished 🥣`;
-    }
-  };
-
   const buttonTapped = () => {
-    // First launch
-    if (startDate == null && endDate == null) {
-      const start = moment();
-      writeStartDate(start);
-    }
-    // Currently fasting
-    else if (endDate == null) {
-      // So stop
-      const end = moment();
-      setEndDate(end);
-    }
-    // Stopped fasting
-    else if (startDate != null && endDate != null) {
-      // So start
-      const start = moment();
-      writeStartDate(start);
-      setEndDate(null);
-    }
-  };
+    // Get to the next stage of the Fast
+    const next = fast.next();
 
-  const buttonText = () => {
-    // First launch
-    if (startDate == null && endDate == null) {
-      return 'Start Fasting';
-    }
-    // Current fasting
-    else if (startDate != null && endDate == null) {
-      return 'Stop Fasting';
-    }
+    // Remove current stage
+    removeItem();
 
-    // startDate != null && endDate != null
-    // Finished
-    return 'Start Fasting';
+    // Progress to next stage
+    writeFast(next);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View>
-        <Text style={styles.text}>{timeText()}</Text>
-        <Button onPress={buttonTapped} title={buttonText()} />
+        {/*                                       ⌄ Crash here - TypeError: undefined is not a function*/}
+        <Text style={styles.text}>{fast.timeText()}</Text>
+        <Button onPress={buttonTapped} title={fast.buttonText()} />
       </View>
     </SafeAreaView>
   );
