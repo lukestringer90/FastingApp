@@ -12,24 +12,45 @@ import {Fast} from './fast';
 
 function App(): JSX.Element {
   const [fast, setFast] = useState<Fast>(new Fast());
-  const [_, setTime] = useState(new Date());
 
-  const secondsUntilReload = 1 * 1000; // every minute
+  const {getItem, setItem, removeItem} = useAsyncStorage('@fast');
+
+  const readFast = async () => {
+    console.log('Reading Fast');
+    const jsonValue = await getItem();
+    console.log(`Read: ${jsonValue}`);
+
+    const loadedFast = jsonValue != null ? JSON.parse(jsonValue) : new Fast();
+    setFast(loadedFast);
+  };
+
+  const writeFast = async (fastToWrite: Fast) => {
+    const jsonValue = JSON.stringify(fast);
+    console.log(`To write:: ${jsonValue}`);
+    await setItem(jsonValue);
+    setFast(fastToWrite);
+  };
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTime(new Date());
-    }, secondsUntilReload);
-
-    return () => clearInterval(interval);
+    // On first load read the Fast from storage
+    readFast();
   }, []);
 
   const buttonTapped = () => {
-    setFast(fast.next());
+    // Get to the next stage of the Fast
+    const next = fast.next();
+
+    // Remove current stage
+    removeItem();
+
+    // Progress to next stage
+    writeFast(next);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View>
+        {/*                                       ⌄ Crash here - TypeError: undefined is not a function*/}
         <Text style={styles.text}>{fast.timeText()}</Text>
         <Button onPress={buttonTapped} title={fast.buttonText()} />
       </View>

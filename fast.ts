@@ -10,11 +10,13 @@ export class Fast {
   start: Nullable<moment.Moment> = null;
   end: Nullable<moment.Moment> = null;
 
-  // Get the next Fast in the state machine
+  // Get the next stage of the Fast
   next() {
+    // Make a copy that we can change based on the current state
     let newFast = new Fast();
     newFast.start = this.start;
     newFast.end = this.end;
+
     switch (this.state()) {
       case FastState.NotStarted: {
         newFast.start = moment();
